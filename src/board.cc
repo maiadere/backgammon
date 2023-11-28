@@ -19,7 +19,7 @@ Board* Board_new() {
   return self;
 }
 
-void print_fields(int8_t* fields, int i0, int i1, int j0, int j1, int dir) {
+void print_fields(int8_t* fields, int i0, int i1, int j0, int j1) {
   for (int j = j0; j < j1; j++) {
     for (int i = i0; i < i1; i++) {
       int8_t x = fields[abs(i)];
@@ -61,9 +61,9 @@ void print_field_numbers(int start, int end) {
 void Board_print(Board* board) {
   print_field_numbers(13, 25);
   print_separator();
-  print_fields(board->fields, 12, 24, 0, 6, 1);
+  print_fields(board->fields, 12, 24, 0, 6);
   print_separator();
-  print_fields(board->fields, -11, 1, -5, 1, -1);
+  print_fields(board->fields, -11, 1, -5, 1);
   print_separator();
   print_field_numbers(-12, 0);
 }
