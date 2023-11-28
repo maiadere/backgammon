@@ -21,6 +21,8 @@ Board* Board_new() {
   return self;
 }
 
+void Board_free(Board* self) { free(self); }
+
 void print_fields(int8_t* fields, int i0, int i1, int j0, int j1) {
   assert(i1 - i0 == 12);
   assert(j1 - j0 == 6);

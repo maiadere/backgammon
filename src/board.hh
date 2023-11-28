@@ -7,4 +7,5 @@ struct Board {
 };
 
 Board* Board_new();
+void Board_free(Board* self);
 void Board_print(Board* board);
