@@ -10,3 +10,4 @@ add_executable(backgammon ${sources})
 
 target_include_directories(backgammon PRIVATE "include")
 target_link_libraries(backgammon PRIVATE ncursesw)
+target_compile_options(backgammon PRIVATE -Wall -Wextra -Wpedantic -Werror)
