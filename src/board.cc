@@ -8,6 +8,7 @@
 Board* Board_new() {
   Board* self = (Board*)malloc(sizeof(Board));
   memset(self->fields, 0, sizeof(self->fields));
+  memset(self->bar, 0, sizeof(self->bar));
   self->fields[0] = 2;
   self->fields[5] = -5;
   self->fields[7] = -3;
