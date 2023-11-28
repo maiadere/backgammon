@@ -9,12 +9,16 @@ Game* Game_new() {
   self->board = Board_new();
   self->state = WAITING_FOR_ROLL;
   self->dices[0] = self->dices[1] = 0;
+  self->turn = 0;
   return self;
 }
 
 void Game_free(Game* self) {
   Board_free(self->board);
-  free(self);
+
+  if (self != NULL) {
+    free(self);
+  }
 }
 
 void Game_mainloop(Game* self) {
@@ -28,13 +32,15 @@ void Game_mainloop(Game* self) {
 }
 
 void Game_prompt(Game* self) {
+  printw("\nCurrent turn: ");
+  addwstr(self->turn == 0 ? L"\u2B24\n" : L"\u25EF\n");
   switch (self->state) {
     case WAITING_FOR_ROLL:
-      printw("\nPress enter to roll dice...");
+      printw("Press any key to roll dice...");
       break;
     case ROLLED:
-      printw("\nRolled: %d %d", self->dices[0], self->dices[1]);
-      printw("\nPress any key...");
+      printw("You rolled: %d %d\n", self->dices[0], self->dices[1]);
+      printw("Press any key...");
       break;
     default:
       break;
@@ -42,14 +48,16 @@ void Game_prompt(Game* self) {
 }
 
 void Game_handle_input(Game* self, int c) {
-  if (self->state == WAITING_FOR_ROLL && c == '\n') {
+  if (c == KEY_ESC) {
+    self->state = QUIT;
+  }
+
+  if (self->state == WAITING_FOR_ROLL) {
     self->dices[0] = 1 + rand() % 6;
     self->dices[1] = 1 + rand() % 6;
     self->state = ROLLED;
-  } else {
+  } else if (self->state == ROLLED) {
     self->state = WAITING_FOR_ROLL;
-    if (c == 'q') {
-      self->state = QUIT;
-    }
+    self->turn = self->turn == 0 ? 1 : 0;
   }
 }
