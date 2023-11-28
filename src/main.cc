@@ -2,26 +2,19 @@
 
 #include <clocale>
 #include <cstdlib>
+#include <ctime>
 
-#include "board.hh"
+#include "game.hh"
 
 int main() {
+  srand(time(NULL));
   setlocale(LC_ALL, "");
   initscr();
   cbreak();
   noecho();
-  Board *board = Board_new();
-
-  for (;;) {
-    clear();
-    Board_print(board);
-    refresh();
-    if (getch() == 'q') {
-      break;
-    }
-  }
-
+  Game* game = Game_new();
+  Game_mainloop(game);
+  Game_free(game);
   endwin();
-  free(board);
   return 0;
 }
