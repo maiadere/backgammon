@@ -8,8 +8,7 @@
 
 Board* Board_new() {
   Board* self = (Board*)malloc(sizeof(Board));
-  memset(self->fields, 0, sizeof(self->fields));
-  memset(self->bar, 0, sizeof(self->bar));
+  memset(self->fields, 0, sizeof(self->fields) / sizeof(self->fields[0]));
   self->fields[0] = 2;
   self->fields[5] = -5;
   self->fields[7] = -3;
@@ -18,6 +17,7 @@ Board* Board_new() {
   self->fields[16] = 3;
   self->fields[18] = 5;
   self->fields[23] = -2;
+  self->bar[0] = self->bar[1] = 0;
   return self;
 }
 
@@ -30,7 +30,7 @@ void print_fields(int8_t* fields, int i0, int i1, int j0, int j1) {
       if (x && abs(x) > abs(j)) {
         addwstr(x > 0 ? L" \u25EF  " : L" \u2B24  ");
       } else {
-        printw(" .. ");
+        addwstr(i & 1 ? L"  \u0F0C " : L"  \u0F1D ");
       }
       if (i == i0 + 5) {
         // TODO: print pawns on bar
@@ -64,12 +64,12 @@ void print_field_numbers(int start, int end) {
   addch(10);
 }
 
-void Board_print(Board* board) {
+void Board_print(Board* self) {
   print_field_numbers(13, 25);
   print_separator("====", "=====");
-  print_fields(board->fields, 12, 24, 0, 6);
+  print_fields(self->fields, 12, 24, 0, 6);
   print_separator("    ", " | | ");
-  print_fields(board->fields, -11, 1, -5, 1);
+  print_fields(self->fields, -11, 1, -5, 1);
   print_separator("====", "=====");
   print_field_numbers(-12, 0);
 }
