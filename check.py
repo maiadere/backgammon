@@ -4,6 +4,14 @@ import clang.cindex
 from clang.cindex import CursorKind, TokenKind
 
 
+def extract_function(cursor):
+    filename = cursor.location.file.name
+    
+    with open(filename, 'r') as f:
+        contents = f.read()
+    
+    return contents[cursor.extent.start.offset: cursor.extent.end.offset]
+
 def check_file(filename, verbose):
     with open(filename, 'r') as f:
         source = f.read()
@@ -24,6 +32,7 @@ def check_file(filename, verbose):
             continue
 
         if c.kind == CursorKind.FUNCTION_DECL:
+            func_size = len(extract_function(c))
             count = 0
 
             for token in c.get_tokens():
@@ -33,7 +42,7 @@ def check_file(filename, verbose):
                 count += len(token.spelling)
 
             if verbose:
-                print(' \u2022', c.spelling, '->', count)
+                print(' \u2022', c.spelling, '->', count, f'\033[91m({func_size})\033[0m' if func_size >= 555 else f'\033[90m({func_size})\033[0m')
 
             if count >= 555:
                 exit(
