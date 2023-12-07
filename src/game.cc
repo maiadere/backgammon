@@ -42,7 +42,7 @@ Move* Game_highlighted_move(Game* self) {
 void Game_mainloop(Game* self) {
   while (self->state != QUIT) {
     clear();
-    cprintw(COLOR_BLUE, "| s197649                                     turn: ");
+    cprintw(COLOR_BLUE, "|                                             turn: ");
     cprintw(self->white_turn ? COLOR_WHITE : COLOR_RED,
             self->white_turn ? "\u2B24" : "\u25EF");
     cprintw(COLOR_BLUE, " |\n");
