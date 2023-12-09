@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "move.hh"
 #include "ui_utils.h"
 
 Board* Board_new() {
@@ -22,6 +23,12 @@ Board* Board_new() {
   self->fields[16] = -3;
   self->fields[18] = -5;
   self->fields[23] = 2;
+  // self->fields[0] = 5;
+  // self->fields[1] = 5;
+  // self->fields[2] = 5;
+  // self->fields[21] = -5;
+  // self->fields[22] = -5;
+  // self->fields[23] = -5;
   return self;
 }
 
@@ -31,37 +38,56 @@ void Board_free(Board* self) {
   }
 }
 
-void print_pawn(int8_t pawn, bool highlighted) {
+#define WHITE_PAWN_STR "\u2B24"
+#define RED_PAWN_STR "\u25EF"
+
+void print_pawn(int8_t pawns, bool highlighted) {
   cprintw(highlighted ? COLOR_YELLOW
-          : pawn > 0  ? COLOR_WHITE
+          : pawns > 0 ? COLOR_WHITE
                       : COLOR_RED,
-          pawn > 0 ? "  \u2B24 " : "  \u25EF ");
+          "  %s ", pawns > 0 ? WHITE_PAWN_STR : RED_PAWN_STR);
 }
 
 void print_default_field(int i, bool highlighted) {
   cprintw(highlighted ? COLOR_YELLOW : COLOR_BLUE,
-          i & 1 ? "  \u0F0C " : "  \u0F1D ");
+          i & 1 ? "  \u1362 " : "  \u1368 ");
 }
 
 void print_pawn_or_default(Board* self, Move* move, int i, int j) {
-  int8_t pawn = self->fields[abs(i)];
+  int8_t pawns = self->fields[abs(i)];
 
-  if (pawn && abs(pawn) > abs(j)) {
-    bool move_from_this_field = move != NULL && move->from == abs(i);
-    print_pawn(pawn, move_from_this_field && abs(pawn) - 1 == abs(j));
+  if (pawns && abs(pawns) > abs(j)) {
+    bool h =
+        (move != NULL && move->from == abs(i) && abs(pawns) - 1 == abs(j)) ||
+        (move != NULL && move->to == abs(i) && abs(pawns) - 1 == 5 &&
+         abs(j) == 5);
+    print_pawn(pawns, h);
   }
 
   else {
-    print_default_field(i, move != NULL && move->to == abs(i));
+    if (move != NULL) {
+      pawns = self->fields[move->to];
+    }
+    bool h = move != NULL && move->to == abs(i) && abs(pawns) == abs(j);
+    print_default_field(i, h);
   }
 }
 
 void print_fields_line(Board* self, Move* move, int i0, int i1, int j) {
   for (int i = i0; i < i1; i++) {
     print_pawn_or_default(self, move, i, j);
+
     if (i == i0 + 5) {
-      // TODO: print pawns on bar
-      cprintw(COLOR_BLUE, " | | ");
+      const char* s = " ";
+      int bar_index = 5 - abs(j);
+
+      if (j > 0 && bar_index < self->bar_white) {
+        s = WHITE_PAWN_STR;
+      } else if (j < 0 && bar_index < self->bar_red) {
+        s = RED_PAWN_STR;
+      }
+
+      cprintw(COLOR_BLUE, " |%s| ", s);
     }
   }
 }
@@ -89,7 +115,7 @@ void print_field_numbers(int start, int end) {
   assert(end - start == 12);
   cprintw(COLOR_BLUE, "|");
   for (int i = start; i < end; i++) {
-    cprintw(COLOR_BLUE, " %2d ", abs(i));
+    cprintw(COLOR_GREEN, " %2d ", abs(i));
     if (i == start + 5) {
       printw("     ");
     }
@@ -109,24 +135,56 @@ void Board_print(Board* self, Move* move) {
   print_separator("====", "=====");
 }
 
-void Board_make_a_move(Board* self, bool white_turn, Move* move) {
-  if (white_turn) {
-    self->fields[move->from]--;
-    self->fields[move->to]++;
+void move_to_field_white(Board* self, Move* move) {
+  self->fields[move->to]++;
 
-    if (self->fields[move->to] == 0) {
-      self->bar_red++;
-      self->fields[move->to]++;
-    }
+  if (self->fields[move->to] == 0) {
+    self->bar_red++;
+    self->fields[move->to]++;
+  }
+}
+
+void move_to_field_red(Board* self, Move* move) {
+  self->fields[move->to]--;
+
+  if (self->fields[move->to] == 0) {
+    self->bar_white++;
+    self->fields[move->to]--;
+  }
+}
+
+void move_white(Board* self, Move* move) {
+  if (move->from == MOVE_FROM_WHITE_BAR) {
+    self->bar_white--;
+  } else {
+    self->fields[move->from]--;
   }
 
-  else {
-    self->fields[move->from]++;
-    self->fields[move->to]--;
+  if (move->to == MOVE_TO_WHITE_COURT) {
+    self->court_white++;
+  } else {
+    move_to_field_white(self, move);
+  }
+}
 
-    if (self->fields[move->to] == 0) {
-      self->bar_white++;
-      self->fields[move->to]--;
-    }
+void move_red(Board* self, Move* move) {
+  if (move->from == MOVE_FROM_RED_BAR) {
+    self->bar_red--;
+  } else {
+    self->fields[move->from]++;
+  }
+
+  if (move->to == MOVE_TO_RED_COURT) {
+    self->court_red++;
+  } else {
+    move_to_field_red(self, move);
+  }
+}
+
+void Board_make_a_move(Board* self, bool white_turn, Move* move) {
+  if (white_turn) {
+    move_white(self, move);
+  } else {
+    move_red(self, move);
   }
 }

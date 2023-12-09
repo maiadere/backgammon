@@ -12,12 +12,16 @@
 #define DICE_NONE 0
 #endif
 
+#ifndef MAX_DICE
+#define MAX_DICE 4
+#endif
+
 enum GameState { PLAYER_TURN, MOVE, NO_MOVES, QUIT };
 
 struct Game {
   GameState state;
   Board* board;
-  uint8_t dices[2];
+  uint8_t dice[MAX_DICE];
   uint8_t rolled[2];
   bool white_turn;
   MoveList* moves;

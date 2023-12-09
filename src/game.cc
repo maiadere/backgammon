@@ -2,7 +2,6 @@
 
 #include <ncurses.h>
 
-#include <cassert>
 #include <cstdlib>
 #include <cstring>
 
@@ -14,7 +13,6 @@ Game* Game_new() {
   memset(self, 0, sizeof(Game));
   self->board = Board_new();
   self->state = PLAYER_TURN;
-  self->dices[0] = self->dices[1] = DICE_NONE;
   self->white_turn = rand() & 1;
   return self;
 }
@@ -55,6 +53,8 @@ void Game_mainloop(Game* self) {
 }
 
 void Game_print_moves(Game* self) {
+  printw("dice: %d %d %d %d\n", self->dice[0], self->dice[1], self->dice[2],
+         self->dice[3]);
   addch('\n');
   for (int i = 0; i < self->moves->size; i++) {
     Move* move = &self->moves->moves[i];
@@ -79,17 +79,29 @@ void Game_prompt(Game* self) {
   printw("%s", msgs[self->state]);
 }
 
+void Game_dice_roll(Game* self) {
+  self->dice[0] = 1 + rand() % 6;
+  self->dice[1] = 1 + rand() % 6;
+
+  if (self->dice[0] == self->dice[1]) {
+    self->dice[2] = self->dice[0];
+    self->dice[3] = self->dice[0];
+  } else {
+    self->dice[2] = DICE_NONE;
+    self->dice[3] = DICE_NONE;
+  }
+
+  self->rolled[0] = self->dice[0];
+  self->rolled[1] = self->dice[1];
+}
+
 void Game_turn(Game* self, int c) {
   if (c == KEY_ESC) {
     self->state = QUIT;
   }
 
   if (c == '\n') {
-    self->dices[0] = 1 + rand() % 6;
-    self->dices[1] = 1 + rand() % 6;
-
-    self->rolled[0] = self->dices[0];
-    self->rolled[1] = self->dices[1];
+    Game_dice_roll(self);
 
     self->moves = MoveList_from_Game(self);
     self->move_index = 0;
@@ -110,19 +122,12 @@ void Game_no_moves(Game* self, int c) {
 
 void Game_make_a_move(Game* self, Move* move) {
   Board_make_a_move(self->board, self->white_turn, move);
-  int distance = abs(move->from - move->to);
 
-  if (distance == self->dices[0]) {
-    self->dices[0] = DICE_NONE;
-  }
-
-  else if (distance == self->dices[1]) {
-    self->dices[1] = DICE_NONE;
-  }
-
-  else if (distance == self->dices[0] + self->dices[1]) {
-    self->dices[0] = DICE_NONE;
-    self->dices[1] = DICE_NONE;
+  for (int i = 0; i < MAX_DICE; i++) {
+    if (self->dice[i] == move->dice) {
+      self->dice[i] = DICE_NONE;
+      break;
+    }
   }
 }
 
@@ -142,7 +147,7 @@ void Game_navigate_moves(Game* self, int c) {
   }
 }
 
-void Game_2nd_move(Game* self) {
+void Game_next_move(Game* self) {
   self->moves = MoveList_from_Game(self);
   self->move_index = 0;
 
@@ -154,17 +159,26 @@ void Game_2nd_move(Game* self) {
   }
 }
 
+bool Game_are_all_dice_none(Game* self) {
+  for (int i = 0; i < MAX_DICE; i++) {
+    if (self->dice[i] != DICE_NONE) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void Game_move(Game* self, int c) {
   if (c == '\n') {
     Game_make_a_move(self, &self->moves->moves[self->move_index]);
     MoveList_free(self->moves);
     self->moves = NULL;
 
-    if (self->dices[0] == DICE_NONE && self->dices[1] == DICE_NONE) {
+    if (Game_are_all_dice_none(self)) {
       self->state = PLAYER_TURN;
       self->white_turn = !self->white_turn;
     } else {
-      Game_2nd_move(self);
+      Game_next_move(self);
     }
   }
 
