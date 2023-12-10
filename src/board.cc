@@ -23,12 +23,6 @@ Board* Board_new() {
   self->fields[16] = -3;
   self->fields[18] = -5;
   self->fields[23] = 2;
-  // self->fields[0] = 5;
-  // self->fields[1] = 5;
-  // self->fields[2] = 5;
-  // self->fields[21] = -5;
-  // self->fields[22] = -5;
-  // self->fields[23] = -5;
   return self;
 }
 
@@ -38,9 +32,6 @@ void Board_free(Board* self) {
   }
 }
 
-#define WHITE_PAWN_STR "\u2B24"
-#define RED_PAWN_STR "\u25EF"
-
 void print_pawn(int8_t pawns, bool highlighted) {
   cprintw(highlighted ? COLOR_YELLOW
           : pawns > 0 ? COLOR_WHITE
@@ -49,8 +40,8 @@ void print_pawn(int8_t pawns, bool highlighted) {
 }
 
 void print_default_field(int i, bool highlighted) {
-  cprintw(highlighted ? COLOR_YELLOW : COLOR_BLUE,
-          i & 1 ? "  \u1362 " : "  \u1368 ");
+  cprintw(highlighted ? COLOR_YELLOW : COLOR_BLUE, "  %s ",
+          i & 1 ? DEFAULT_FIELD_STR1 : DEFAULT_FIELD_STR2);
 }
 
 void print_pawn_or_default(Board* self, Move* move, int i, int j) {
@@ -92,15 +83,42 @@ void print_fields_line(Board* self, Move* move, int i0, int i1, int j) {
   }
 }
 
+int court_color(Move* move, bool is_white, const char* s) {
+  bool default_field = strcmp(s, DEFAULT_COURT_FIELD_STR) == 0;
+
+  if (default_field) {
+    return (move != NULL && ((move->to == MOVE_TO_WHITE_COURT && is_white) ||
+                             (move->to == MOVE_TO_RED_COURT && !is_white)))
+               ? COLOR_YELLOW
+               : COLOR_BLUE;
+  }
+
+  return is_white ? COLOR_WHITE : COLOR_RED;
+}
+
+void print_court(Board* self, Move* move, bool is_white, int j) {
+  for (int i = 0; i < 3; i++) {
+    const char* s = DEFAULT_COURT_FIELD_STR;
+    if (is_white && abs(j) < self->court_white - 6 * i) {
+      s = WHITE_PAWN_STR;
+    } else if (!is_white && abs(j) < self->court_red - 6 * i) {
+      s = RED_PAWN_STR;
+    }
+    cprintw(court_color(move, is_white, s), " %s", s);
+  }
+}
+
 void print_fields(Board* self, Move* move, int i0, int i1, int j0, int j1) {
   for (int j = j0; j < j1; j++) {
     cprintw(COLOR_BLUE, "|");
     print_fields_line(self, move, i0, i1, j);
-    cprintw(COLOR_BLUE, "|\n");
+    cprintw(COLOR_BLUE, "| |");
+    print_court(self, move, j0 < 0, j);
+    cprintw(COLOR_BLUE, " |\n");
   }
 }
 
-void print_separator(const char* s0, const char* s1) {
+void print_separator(const char* s0, const char* s1, const char* s2) {
   cprintw(COLOR_BLUE, "|");
   for (int i = 0; i < 12; i++) {
     cprintw(COLOR_BLUE, "%s", s0);
@@ -108,7 +126,7 @@ void print_separator(const char* s0, const char* s1) {
       cprintw(COLOR_BLUE, "%s", s1);
     }
   }
-  cprintw(COLOR_BLUE, "|\n");
+  cprintw(COLOR_BLUE, "| %s\n", s2);
 }
 
 void print_field_numbers(int start, int end) {
@@ -120,19 +138,19 @@ void print_field_numbers(int start, int end) {
       printw("     ");
     }
   }
-  cprintw(COLOR_BLUE, "|\n");
+  cprintw(COLOR_BLUE, "| |       |\n");
 }
 
 void Board_print(Board* self, Move* move) {
-  print_separator("====", "=====");
+  print_separator("====", "=====", "|=======|");
   print_field_numbers(13, 25);
-  print_separator("====", "=====");
+  print_separator("====", "=====", "|       |");
   print_fields(self, move, 12, 24, 0, 6);
-  print_separator("    ", " | | ");
+  print_separator("    ", " | | ", "|       |");
   print_fields(self, move, -11, 1, -5, 1);
-  print_separator("====", "=====");
+  print_separator("====", "=====", "|       |");
   print_field_numbers(-12, 0);
-  print_separator("====", "=====");
+  print_separator("====", "=====", "|=======|");
 }
 
 void move_to_field_white(Board* self, Move* move) {

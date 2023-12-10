@@ -1,10 +1,7 @@
 #pragma once
 
 #include <cstdint>
-
-#ifndef MAX_MOVES
-#define MAX_MOVES 48
-#endif
+#include <cstdio>
 
 #ifndef MOVE_FROM_WHITE_BAR
 #define MOVE_FROM_WHITE_BAR 24
@@ -29,10 +26,12 @@ struct Move {
 };
 
 struct MoveList {
-  Move moves[MAX_MOVES];
+  Move* data;
   int size;
+  int capacity;
 };
 
 MoveList* MoveList_new();
 void MoveList_free(MoveList* self);
 void MoveList_add(MoveList* self, uint8_t from, uint8_t to, int dice);
+void MoveList_save(MoveList* self, FILE* f);

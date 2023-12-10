@@ -72,9 +72,9 @@ void check_moves_from_bar(Game* game, MoveList* moves, int dice) {
 void MoveList_remove_duplicates(MoveList* self) {
   for (int i = 0; i < self->size; i++) {
     for (int j = i + 1; j < self->size; j++) {
-      if (self->moves[i].from == self->moves[j].from &&
-          self->moves[i].to == self->moves[j].to) {
-        self->moves[j] = self->moves[self->size - 1];
+      if (self->data[i].from == self->data[j].from &&
+          self->data[i].to == self->data[j].to) {
+        self->data[j] = self->data[self->size - 1];
         self->size--;
         j--;
       }
@@ -91,7 +91,7 @@ bool MoveList_find_taking_move(MoveList* self, Game* game) {
   int index = -1;
 
   for (int i = 0; i < self->size; i++) {
-    int distance = self->moves[i].to;
+    int distance = self->data[i].to;
 
     if (game->white_turn) {
       distance = 23 - distance;
@@ -103,7 +103,7 @@ bool MoveList_find_taking_move(MoveList* self, Game* game) {
     }
   }
 
-  self->moves[0] = self->moves[index];
+  self->data[0] = self->data[index];
   self->size = 1;
   return true;
 }
@@ -125,14 +125,14 @@ void MoveList_force_take(MoveList* self, Game* game) {
   MoveList* taking_moves = MoveList_new();
 
   for (int i = 0; i < self->size; i++) {
-    if (is_taking_move(self->moves[i], game)) {
-      MoveList_add(taking_moves, self->moves[i].from, self->moves[i].to,
-                   self->moves[i].dice);
+    if (is_taking_move(self->data[i], game)) {
+      MoveList_add(taking_moves, self->data[i].from, self->data[i].to,
+                   self->data[i].dice);
     }
   }
 
   if (MoveList_find_taking_move(taking_moves, game)) {
-    self->moves[0] = taking_moves->moves[0];
+    self->data[0] = taking_moves->data[0];
     self->size = 1;
   }
   MoveList_free(taking_moves);
@@ -195,10 +195,12 @@ void MoveList_force_remove(MoveList* self, Game* game) {
   }
 
   if (removing_moves->size > 0) {
+    self->size = 0;
+
     for (int i = 0; i < removing_moves->size; i++) {
-      self->moves[i] = removing_moves->moves[i];
+      Move move = removing_moves->data[i];
+      MoveList_add(self, move.from, move.to, move.dice);
     }
-    self->size = removing_moves->size;
   }
 
   MoveList_free(removing_moves);

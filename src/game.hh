@@ -16,7 +16,15 @@
 #define MAX_DICE 4
 #endif
 
-enum GameState { PLAYER_TURN, MOVE, NO_MOVES, QUIT };
+enum GameState {
+  MAIN_MENU,
+  PLAYER_TURN,
+  MOVE,
+  NO_MOVES,
+  GAME_OVER,
+  VISUALIZE_GAMEPLAY,
+  QUIT
+};
 
 struct Game {
   GameState state;
@@ -26,6 +34,10 @@ struct Game {
   bool white_turn;
   MoveList* moves;
   int move_index;
+  MoveList* history;
+  char white_name[32];
+  char red_name[32];
+  Board** board_history;
 };
 
 Game* Game_new();

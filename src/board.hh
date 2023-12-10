@@ -18,3 +18,5 @@ void Board_free(Board* self);
 void Board_print(Board* board, Move* move);
 
 void Board_make_a_move(Board* self, bool white_turn, Move* move);
+
+void print_separator(const char* s0, const char* s1, const char* s2);
